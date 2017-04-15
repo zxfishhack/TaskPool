@@ -1,0 +1,109 @@
+#ifndef _TASK_POOL_H_
+#define _TASK_POOL_H_
+
+#include <misc/localstorage.h>
+#include <promise/promise.h>
+#include <process.h>
+#include <exception>
+#include <coroutine/coroutine.h>
+#include <platform/sync.h>
+#include <deque>
+#include <coroutine/task.h>
+#include <boost/bind.hpp>
+#include <promise/deferredcontext.h>
+#include <unordered_map>
+#include <boost/atomic.hpp>
+
+namespace Task
+{
+	class ITask;
+	template<typename Ret>
+	class PromiseTask;
+	class CoroutineSchedule;
+	class Pool;
+	
+	namespace internal {
+		detail::CoroutineLocal<ITask*> curTask;
+		detail::ThreadLocal<Pool*> curPool;
+		detail::ThreadLocal<CoroutineSchedule*> curSchedule;
+		detail::ThreadLocal<size_t> curThreadId;
+	}
+	
+	class Pool {
+	public:
+		Pool(int thrNum);
+		~Pool();
+		void join();
+		bool addTask(ITask* task, size_t* cancelHandle);
+		bool addImmediatelyTask(ITask* task, size_t* cancelHandle);
+		bool cancelTask(size_t cancelHandle);
+	private:
+		bool wakeupCoroutine(Coroutine * co);
+
+		typedef std::deque<Coroutine*> TaskQueueType;
+		typedef std::unordered_map<size_t, ITask*> CancelableTaskMap;
+		HANDLE * m_threads;
+		int m_threadNum;
+		boost::atomic<size_t> m_thrId;
+		boost::atomic<size_t> m_curIdx;
+		bool m_exit;
+		bool m_exited;
+		Mutex* m_lock;
+		Semaphore* m_semaphore;
+		TaskQueueType* m_queue;
+		Mutex m_freeLock;
+		TaskQueueType m_freeQueue;
+		boost::atomic<size_t> m_freeCount;
+		Mutex m_cancelLock;
+		CancelableTaskMap m_cancelable;
+		boost::atomic<size_t> m_cancelHandleValue;
+		static const size_t MAX_FREE_QUEUE_SIZE = 1024;
+		void routine();
+		static unsigned s_routine(void* ptr);
+		Coroutine * allocCoroutine(size_t idx, ITask* task);
+		void freeCoroutine(Coroutine* co);
+		void checkSemaphore(TaskQueueType& list, Semaphore & sem);
+		bool removeTask(ITask* task);
+		template<typename Ret>
+		friend class PromiseTask;
+	};
+
+	class CancelAsyncException : public std::exception {};
+
+	#include "detail/taskpool_impl.h"
+
+	Promise<void> createTimeout(unsigned int timeoutMs);
+
+	template<typename Ret>
+	Promise<Ret> async(boost::function<Ret()> func) {
+		Pool* pool = internal::curPool.get();
+		if (pool == NULL) {
+			return Promise<Ret>(false);
+		}
+		PromiseTask<Ret> * task = new PromiseTask<Ret>(func);
+		if (!pool->addTask(task)) {
+			delete task;
+			return Promise<Ret>(false);
+		} else {
+			return task->promise();
+		}
+	}
+
+	template<typename Ty>
+	Promise<Ty> await(Promise<Ty> pro) {
+		Pool* pool = internal::curPool.get();
+		Coroutine* co = internal::curTask.get()->associate();
+		if (indeterminate(pro.reset())) {
+			PromiseNotify* notify = new PromiseNotify(co, pool);
+			pro.always(boost::bind(&PromiseNotify::notify, notify));
+			co->yield();
+			if (notify->isCancelled()) {
+				pro.cancel();
+				throw(CancelAsyncException());
+			}
+		}
+		return pro;
+ 	}
+}
+
+#endif

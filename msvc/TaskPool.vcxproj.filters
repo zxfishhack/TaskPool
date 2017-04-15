@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{7dab8c3f-4057-4ccf-9cc8-84bdb0cd7e17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\asio">
+      <UniqueIdentifier>{f263c047-fa2a-4866-9236-9bd65533b702}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\coroutine">
+      <UniqueIdentifier>{50ac29db-f16c-4e56-8037-a1aca10b9d2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\detail">
+      <UniqueIdentifier>{b7a225cf-0278-4628-ab37-227dd5ba1205}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\misc">
+      <UniqueIdentifier>{89e9b928-e05f-4567-afde-b2f732754fbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\platform">
+      <UniqueIdentifier>{c8ab7632-7c29-479b-85f8-5acce495c54e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\promise">
+      <UniqueIdentifier>{1025703d-0d53-4d16-b20e-9c6809691807}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\promise\detail">
+      <UniqueIdentifier>{12111df1-87f9-4551-8847-d41d36b0b770}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{63208196-982e-4a0b-9062-73ec7fecf82b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\asio">
+      <UniqueIdentifier>{6110786b-2557-4c2c-be2c-2af5e87d16ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\coroutine">
+      <UniqueIdentifier>{c9b82bd5-6aa6-4dc1-93c0-208762780a0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\promise">
+      <UniqueIdentifier>{67b8fd27-19a5-409a-900a-3c4bd529eaa3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\global.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\taskpool.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asio\asio.h">
+      <Filter>include\asio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\coroutine\coroutine.h">
+      <Filter>include\coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\coroutine\coroutineschedule.h">
+      <Filter>include\coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\coroutine\task.h">
+      <Filter>include\coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\detail\taskpool_impl.h">
+      <Filter>include\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\misc\localstorage.h">
+      <Filter>include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\platform\sync.h">
+      <Filter>include\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\promise\deferredcontext.h">
+      <Filter>include\promise</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\promise\promise.h">
+      <Filter>include\promise</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\promise\detail\deferredbase.h">
+      <Filter>include\promise\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\promise\detail\deferredcontext_impl.h">
+      <Filter>include\promise\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\promise\detail\deferreddata.h">
+      <Filter>include\promise\detail</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\taskpool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\asio\asio_w32.cpp">
+      <Filter>src\asio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\coroutine\coroutine.cpp">
+      <Filter>src\coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\coroutine\coroutineschedule.cpp">
+      <Filter>src\coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\coroutine\task.cpp">
+      <Filter>src\coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\promise\deferredbase.cpp">
+      <Filter>src\promise</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\promise\deferreddata.cpp">
+      <Filter>src\promise</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

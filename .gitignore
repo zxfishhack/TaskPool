@@ -1,0 +1,11 @@
+vendor/boost/
+msvc/_ReSharper.Caches/
+objs/
+msvc/x64/
+lib/
+msvc/.vs/
+*.opendb
+msvc/TaskPool.VC.db
+*.user
+libs/
+bin/
