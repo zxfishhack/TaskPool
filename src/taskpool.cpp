@@ -36,7 +36,7 @@ namespace Task {
 
 	boost::atomic<size_t> Pool::s_poolId;
 
-	Pool::Pool(int thrNum, KAFFINITY affinity, KAFFINITY affinityMask)
+	Pool::Pool(int thrNum, KAFFINITY affinity)
 		: m_threadNum(thrNum)
 		, m_exit(false)
 		, m_exited(false) {
@@ -44,7 +44,6 @@ namespace Task {
 		m_lock = new Mutex[m_threadNum];
 		m_queue = new TaskQueueType[m_threadNum];
 		m_semaphore = new Semaphore[m_threadNum];
-		affinity &= affinityMask;
 		int maxIdx = internal::msb(affinity);
 		int minIdx = internal::lsb(affinity);
 		KAFFINITY prefAffinity;

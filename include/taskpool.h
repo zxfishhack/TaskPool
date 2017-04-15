@@ -33,7 +33,7 @@ namespace Task {
 	
 	class Pool {
 	public:
-		Pool(int thrNum, KAFFINITY affinity = 0, KAFFINITY affinityMask = 0);
+		Pool(int thrNum, KAFFINITY affinity = 0);
 		~Pool();
 		void join();
 		bool addTask(ITask* task, size_t* cancelHandle = 0);
