@@ -1,5 +1,5 @@
-#include <asio/asio.h>
 #include <global.h>
+#include <asio/asio.h>
 #include <promise/deferredcontext.h>
 #include <boost/smart_ptr.hpp>
 
