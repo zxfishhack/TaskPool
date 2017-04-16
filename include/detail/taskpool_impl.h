@@ -26,6 +26,18 @@ private:
 	boost::function<Ret()> m_func;
 };
 
+template<>
+void PromiseTask<void>::run() {
+	m_func();
+	if (indeterminate(DeferredContext<void>::state())) {
+		DeferredContext<void>::resolve();
+	}
+	else {
+		//do nothing
+	}
+}
+
+
 class CancelToken : protected DeferredContext<void> {
 public:
 	void apply() {
