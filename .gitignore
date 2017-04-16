@@ -8,3 +8,4 @@ msvc/TaskPool.VC.db
 *.user
 libs/
 bin/
+vendor/boost/
