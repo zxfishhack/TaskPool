@@ -37,7 +37,6 @@ void PromiseTask<void>::run() {
 	}
 }
 
-
 class CancelToken : protected DeferredContext<void> {
 public:
 	void apply() {

@@ -19,7 +19,7 @@ namespace Task {
 				::TlsSetValue(m_tlsId, LPVOID(p));
 			}
 			Ty get() {
-				return  static_cast<Ty>(::TlsGetValue(m_tlsId));
+				return reinterpret_cast<Ty>(::TlsGetValue(m_tlsId));
 			}
 		private:
 			DWORD m_tlsId;

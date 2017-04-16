@@ -58,10 +58,12 @@ namespace Task {
 					if (curIdx > maxIdx) {
 						curIdx = minIdx;
 					}
+					prefAffinity = KAFFINITY(1) << curIdx;
 				}
 				::SetThreadAffinityMask(m_threads[i], prefAffinity);
 			}
 			::ResumeThread(m_threads[i]);
+			curIdx++;
 		}
 	}
 
@@ -328,10 +330,7 @@ namespace Task {
 		: public DeferredContextInterface
 		, public DeferredData {
 	public:
-		WaitMany0(std::vector<IPromise>& promises) {
-#ifdef DEBUG
-			strcpy_s(SIGNATURE, "WaitMany0");
-#endif
+		void init(std::vector<IPromise>& promises) {
 			m_promises.swap(promises);
 			for (std::vector<IPromise>::iterator i = m_promises.begin(); i != m_promises.end(); ++i) {
 				i->always(boost::bind(&WaitMany0::onAlways, this, boost::placeholders::_1));
@@ -388,11 +387,8 @@ namespace Task {
 	template<typename Operator>
 	class WaitMany1 : public WaitMany0<Operator> {
 	public:
-		WaitMany1(std::vector<IPromise>& promises, unsigned int timeoutMs)
-			: WaitMany0(promises) {
-#ifdef DEBUG
-			strcpy_s(WaitMany0<Operator>::SIGNATURE, "WaitMany1");
-#endif
+		void init(std::vector<IPromise>& promises, unsigned int timeoutMs) {
+			WaitMany0<Operator>::init(promises);
 			m_timeout = createTimeout(timeoutMs);
 			m_timeout.always(boost::bind(&WaitMany1::onAlways, this, boost::placeholders::_1));
 			WaitMany1::onAlways(true);
@@ -419,9 +415,9 @@ namespace Task {
 	template<typename Operator>
 	class WaitMany2 : public WaitMany1<Operator> {
 	public:
-		WaitMany2(std::vector<IPromise>& promises, unsigned int timeoutMs, CancelToken token)
-			: WaitMany1(promises, timeoutMs)
-			, m_cancel(token.promise()) {
+		void init(std::vector<IPromise>& promises, unsigned int timeoutMs, CancelToken token) {
+			WaitMany1<Operator>::init(promises, timeoutMs);
+			m_cancel = token.promise();
 			m_cancel.always(boost::bind(&WaitMany2::onAlways, this, boost::placeholders::_1));
 			WaitMany2::onAlways(true);
 		}
@@ -442,37 +438,40 @@ namespace Task {
 	};
 
 	Promise<void> waitAll(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token) {
-		DeferredDataPtr wait(new WaitMany2<TriboolAnd>(promises, timeoutMs, token));
+		boost::shared_ptr<WaitMany2<TriboolAnd>> wait(new WaitMany2<TriboolAnd>());
+		wait->init(promises, timeoutMs, token);
 		return await(Promise<void>(wait));
 	}
 	Promise<void> waitAll(std::vector<IPromise> promises, unsigned int timeoutMs) {
-		DeferredDataPtr wait(new WaitMany1<TriboolAnd>(promises, timeoutMs));
+		boost::shared_ptr<WaitMany1<TriboolAnd>> wait(new WaitMany1<TriboolAnd>());
+		wait->init(promises, timeoutMs);
 		return await(Promise<void>(wait));
 	}
 	Promise<void> waitAll(std::vector<IPromise> promises) {
-		DeferredDataPtr wait(new WaitMany0<TriboolAnd>(promises));
+		boost::shared_ptr<WaitMany0<TriboolAnd>> wait(new WaitMany0<TriboolAnd>());
+		wait->init(promises);
 		return await(Promise<void>(wait));
 	}
 
 	Promise<void> waitAny(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token) {
-		DeferredDataPtr wait(new WaitMany2<TriboolOr>(promises, timeoutMs, token));
+		boost::shared_ptr<WaitMany2<TriboolOr>> wait(new WaitMany2<TriboolOr>());
+		wait->init(promises, timeoutMs, token);
 		return await(Promise<void>(wait));
 	}
 	Promise<void> waitAny(std::vector<IPromise> promises, unsigned int timeoutMs) {
-		DeferredDataPtr wait(new WaitMany1<TriboolOr>(promises, timeoutMs));
+		boost::shared_ptr<WaitMany1<TriboolOr>> wait(new WaitMany1<TriboolOr>());
+		wait->init(promises, timeoutMs);
 		return await(Promise<void>(wait));
 	}
 	Promise<void> waitAny(std::vector<IPromise> promises) {
-		DeferredDataPtr wait(new WaitMany0<TriboolOr>(promises));
+		boost::shared_ptr<WaitMany0<TriboolOr>> wait(new WaitMany0<TriboolOr>());
+		wait->init(promises);
 		return await(Promise<void>(wait));
 	}
 
 	class TimeoutPromise : public DeferredContext<void> {
 	public:
 		TimeoutPromise(unsigned int timeoutMs) {
-#ifdef DEBUG
-			strcpy_s(SIGNATURE, "TIMEOUT");
-#endif
 			m_hTimer = ::CreateWaitableTimer(NULL, FALSE, NULL);
 			LARGE_INTEGER li;
 			li.QuadPart = timeoutMs;
