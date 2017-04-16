@@ -56,6 +56,7 @@ namespace Task {
 		Mutex* m_lock;
 		Semaphore* m_semaphore;
 		TaskQueueType* m_queue;
+		TaskQueueType* m_privateQueue;
 		Mutex m_freeLock;
 		TaskQueueType m_freeQueue;
 		boost::atomic<size_t> m_freeCount;

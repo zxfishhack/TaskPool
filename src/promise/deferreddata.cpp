@@ -45,15 +45,15 @@ namespace Task {
 		m_activating = false;
 	}
 	void DeferredData::cancel() {
+		DeferredDataPtr hold(shared_from_this());
 		m_state = false;
 		if (m_context) {
-			DeferredDataPtr hold(shared_from_this());
 			m_context->cancelMe();
 		}
 	}
 	tribool DeferredData::reset() {
+		DeferredDataPtr hold(shared_from_this());
 		if (m_context) {
-			DeferredDataPtr hold(shared_from_this());
 			m_state = m_context->resetMe();
 			if (indeterminate(m_state)) {
 				m_result = boost::any();

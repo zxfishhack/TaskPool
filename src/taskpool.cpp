@@ -43,6 +43,7 @@ namespace Task {
 		m_threads = new HANDLE[m_threadNum];
 		m_lock = new Mutex[m_threadNum];
 		m_queue = new TaskQueueType[m_threadNum];
+		m_privateQueue = new TaskQueueType[m_threadNum];
 		m_semaphore = new Semaphore[m_threadNum];
 		int maxIdx = internal::msb(affinity);
 		int minIdx = internal::lsb(affinity);
@@ -74,6 +75,9 @@ namespace Task {
 			for(TaskQueueType::iterator it = m_queue[i].begin(); it != m_queue[i].end(); ++it) {
 				delete *it;
 			}
+			for (TaskQueueType::iterator it = m_privateQueue[i].begin(); it != m_privateQueue[i].end(); ++it) {
+				delete *it;
+			}
 		}
 		for(TaskQueueType::iterator it = m_freeQueue.begin(); it != m_freeQueue.end(); ++it) {
 			delete *it;
@@ -81,6 +85,7 @@ namespace Task {
 		delete[] m_threads;
 		delete[] m_lock;
 		delete[] m_queue;
+		delete[] m_privateQueue;
 		delete[] m_semaphore;
 	}
 	void Pool::join() {
@@ -179,15 +184,19 @@ namespace Task {
 		if (m_exited) {
 			return false;
 		}
-		size_t idx = co->task()->associateThread() - 1;
-		if (co->task()->associateThread() == 0) {
-			idx = m_curIdx.fetch_add(1);
-			idx %= m_threadNum;
+		if (!co) {
+			return false;
 		}
+		if (co->task()->associateThread() == 0) {
+			// don't wakeup coroutine before first run
+			return false;
+		}
+		size_t idx = co->task()->associateThread() - 1;
 		{
+			// always wakeup in same thread
 			ScopedLock _(m_lock[idx]);
-			m_queue[idx].push_front(co);
-			checkSemaphore(m_queue[idx], m_semaphore[idx]);
+			m_privateQueue[idx].push_front(co);
+			checkSemaphore(m_privateQueue[idx], m_semaphore[idx]);
 			return true;
 		}
 	}
@@ -198,12 +207,18 @@ namespace Task {
 		size_t idx = m_thrId.fetch_add(1);
 		internal::curThreadId.set(idx + 1);
 		while (!m_exit) {
-			Coroutine* co = NULL;;
+			Coroutine* co = NULL;
 			{
 				ScopedLock _(m_lock[idx]);
 				if (!m_queue[idx].empty()) {
 					co = m_queue[idx].front();
 					m_queue[idx].pop_front();
+				}
+				if (!co) {
+					if (!m_privateQueue[idx].empty()) {
+						co = m_privateQueue[idx].front();
+						m_privateQueue[idx].pop_front();
+					}
 				}
 			}
 			if (!co) {
