@@ -135,13 +135,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\asio\asio.h" />
     <ClInclude Include="..\include\coroutine\coroutine.h" />
     <ClInclude Include="..\include\coroutine\coroutineschedule.h" />
     <ClInclude Include="..\include\coroutine\task.h" />
     <ClInclude Include="..\include\detail\taskpool_impl.h" />
     <ClInclude Include="..\include\global.h" />
     <ClInclude Include="..\include\misc\localstorage.h" />
+    <ClInclude Include="..\include\platform\singleton.h" />
     <ClInclude Include="..\include\platform\sync.h" />
     <ClInclude Include="..\include\platform\sync_posix.h" />
     <ClInclude Include="..\include\platform\sync_w32.h" />
@@ -153,7 +153,6 @@
     <ClInclude Include="..\include\taskpool.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\asio\asio_w32.cpp" />
     <ClCompile Include="..\src\coroutine\coroutine.cpp" />
     <ClCompile Include="..\src\coroutine\coroutineschedule.cpp" />
     <ClCompile Include="..\src\coroutine\task.cpp" />

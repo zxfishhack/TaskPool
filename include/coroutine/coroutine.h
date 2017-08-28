@@ -1,6 +1,11 @@
 ﻿#ifndef _TASK_POOL_COROUTINE_H_
 #define _TASK_POOL_COROUTINE_H_
 
+#ifdef __linux__
+#include <ucontext.h>
+#include <stdint.h>
+#endif
+
 namespace Task {
 	
 	class ITask;
@@ -29,9 +34,17 @@ namespace Task {
 		friend class CoroutineSchedule;
 		ITask* m_task;
 		Status m_status;
-		HANDLE m_fiber;
 		void fiberProc();
+#ifdef _WIN32
+		HANDLE m_fiber;
 		static void __stdcall s_fiberProc(LPVOID p);
+#endif
+
+#ifdef __linux__
+		ucontext_t m_ctx;
+		char* m_stack;
+		static void s_fiberProc(uint32_t low32, uint32_t hi32);
+#endif
 	};
 };
 

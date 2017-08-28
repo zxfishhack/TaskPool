@@ -18,7 +18,13 @@ namespace Task {
 
 		Coroutine* running() const;
 	private:
+#ifdef _WIN32
 		HANDLE m_fiber;
+#endif
+#ifdef __linux__
+		ucontext_t m_main;
+		char * m_stack;
+#endif
 		Coroutine *m_running;
 	};
 

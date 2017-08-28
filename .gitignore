@@ -10,3 +10,5 @@ libs/
 bin/
 vendor/boost/
 /msvc/deferreddata.i-b49ed93e
+/tests/MAKEFILE_x64_debug.DEPEND
+/src/MAKEFILE_x64_debug.DEPEND

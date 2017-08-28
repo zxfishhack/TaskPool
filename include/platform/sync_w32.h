@@ -1,5 +1,3 @@
-#ifndef _TASK_POOL_SYNC_WIN32_H_
-#define _TASK_POOL_SYNC_WIN32_H_
 
 #include <global.h>
 #include <exception>
@@ -18,13 +16,13 @@ namespace Task {
 			::CloseHandle(m_mutex);
 			m_mutex = NULL;
 		}
-		void lock() const {
+		void lock() {
 			DWORD ret;
 			do {
 				ret = ::WaitForSingleObjectEx(m_mutex, INFINITE, TRUE);
 			} while (ret != WAIT_OBJECT_0);
 		}
-		void unlock() const {
+		void unlock() {
 			::ReleaseMutex(m_mutex);
 		}
 	private:
@@ -42,10 +40,10 @@ namespace Task {
 		~Semaphore() {
 			::CloseHandle(m_semaphore);
 		}
-		void up(int count = 1) const {
+		void up(int count = 1) {
 			::ReleaseSemaphore(m_semaphore, count, NULL);
 		}
-		void down() const {
+		void down() {
 			DWORD ret;
 			do {
 				ret = ::WaitForSingleObjectEx(m_semaphore, INFINITE, TRUE);
@@ -55,5 +53,3 @@ namespace Task {
 		HANDLE m_semaphore;
 	};
 }
-
-#endif

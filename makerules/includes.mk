@@ -1,0 +1,6 @@
+ifndef $(INCLUDES_MK)
+INCLUDES_MK = 1
+
+PROJECT_INCLUDE  = -I$(PROJECT_ROOT_PATH) 
+
+endif

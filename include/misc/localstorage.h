@@ -2,10 +2,14 @@
 #define _TASK_POOL_LOCAL_STORAGE_H_
 
 #include <global.h>
+#include <new>
+#ifdef __linux__
+#include <pthread.h>
+#endif
 
 namespace Task {
 	namespace detail {
-		
+#ifdef _WIN32
 		template<typename Ty>
 		class ThreadLocal : boost::noncopyable {
 		public:
@@ -24,25 +28,31 @@ namespace Task {
 		private:
 			DWORD m_tlsId;
 		};
-		
+#endif
+
+#ifdef __linux__
 		template<typename Ty>
-		class CoroutineLocal : boost::noncopyable {
+		class ThreadLocal {
 		public:
-			CoroutineLocal() {
-				m_clsId = ::FlsAlloc(NULL);
+			ThreadLocal() {
+				if (pthread_key_create(&m_key, NULL) != 0) {
+					throw std::bad_alloc();
+				}
+				set(Ty(0));
 			}
-			~CoroutineLocal() {
-				::FlsFree(m_clsId);
+			~ThreadLocal() {
+				pthread_key_delete(m_key);
 			}
-			void set(Ty p) {
-				::FlsSetValue(m_clsId, p);
+			void set(Ty p) const {
+				pthread_setspecific(m_key, (const void*)p);
 			}
-			Ty get() {
-				return static_cast<Ty>(::FlsGetValue(m_clsId));
+			Ty get() const {
+				return Ty(pthread_getspecific(m_key));
 			}
 		private:
-			DWORD m_clsId;
+			pthread_key_t m_key;
 		};
+#endif
 	}
 }
 

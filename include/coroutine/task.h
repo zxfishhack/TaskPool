@@ -12,7 +12,7 @@ namespace Task {
 	public:
 		void Run();
 
-		virtual ~ITask() = 0 {};
+		virtual ~ITask() {}
 		virtual void run() = 0;
 		bool cancelTask();
 		void associate(Coroutine* co);

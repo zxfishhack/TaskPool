@@ -3,11 +3,13 @@
 #include <coroutine/coroutine.h>
 #include <coroutine/coroutineschedule.h>
 #include <boost/bind/placeholders.hpp>
+#include <boost/asio.hpp>
+#include <boost/date_time.hpp>
+#include "platform/singleton.h"
 
 namespace Task {
 
 	namespace internal {
-		detail::CoroutineLocal<ITask*> curTask;
 		detail::ThreadLocal<Pool*> curPool;
 		detail::ThreadLocal<CoroutineSchedule*> curSchedule;
 		detail::ThreadLocal<size_t> curThreadId;
@@ -34,24 +36,27 @@ namespace Task {
 		}
 	}
 
-	boost::atomic<size_t> Pool::s_poolId;
+	boost::atomic<size_t> Pool::s_poolId(0);
 
 	Pool::Pool(int thrNum, KAFFINITY affinity)
 		: m_threadNum(thrNum)
+		, m_thrId(0)
+		, m_curIdx(0)
 		, m_exit(false)
-		, m_exited(false) {
-		m_threads = new HANDLE[m_threadNum];
+		, m_exited(false)
+		, m_freeCount(0)
+		, m_cancelHandleValue(0) {
+		m_threads.resize(m_threadNum);
 		m_lock = new Mutex[m_threadNum];
 		m_queue = new TaskQueueType[m_threadNum];
 		m_privateQueue = new TaskQueueType[m_threadNum];
 		m_semaphore = new Semaphore[m_threadNum];
 		int maxIdx = internal::msb(affinity);
 		int minIdx = internal::lsb(affinity);
-		KAFFINITY prefAffinity;
+		KAFFINITY prefAffinity = 0;
 		int curIdx = minIdx;
 		m_poolId = s_poolId.fetch_add(1) + 1;
 		for (int i = 0; i < m_threadNum; i++) {
-			m_threads[i] = HANDLE(_beginthreadex(NULL, 0, Pool::s_routine, this, CREATE_SUSPENDED, NULL));
 			if (affinity != 0) {
 				prefAffinity = KAFFINITY(1) << curIdx;
 				while(prefAffinity & affinity) {
@@ -61,9 +66,8 @@ namespace Task {
 					}
 					prefAffinity = KAFFINITY(1) << curIdx;
 				}
-				::SetThreadAffinityMask(m_threads[i], prefAffinity);
 			}
-			::ResumeThread(m_threads[i]);
+			m_threads[i] = new Thread(Pool::s_routine, this, STACK_SIZE + 1024, prefAffinity);
 			curIdx++;
 		}
 	}
@@ -71,7 +75,7 @@ namespace Task {
 	Pool::~Pool() {
 		join();
 		for (int i = 0; i < m_threadNum; i++) {
-			::CloseHandle(m_threads[i]);
+			delete m_threads[i];
 			for(TaskQueueType::iterator it = m_queue[i].begin(); it != m_queue[i].end(); ++it) {
 				delete *it;
 			}
@@ -82,7 +86,6 @@ namespace Task {
 		for(TaskQueueType::iterator it = m_freeQueue.begin(); it != m_freeQueue.end(); ++it) {
 			delete *it;
 		}
-		delete[] m_threads;
 		delete[] m_lock;
 		delete[] m_queue;
 		delete[] m_privateQueue;
@@ -93,7 +96,9 @@ namespace Task {
 		for (int i = 0; i < m_threadNum; i++) {
 			m_semaphore[i].up();
 		}
-		::WaitForMultipleObjectsEx(m_threadNum, m_threads, TRUE, INFINITE, TRUE);
+		for(int i = 0; i < m_threadNum; i++) {
+			m_threads[i]->join();
+		}
 		m_exited = true;
 	}
 	bool Pool::addTask(ITask *task, size_t *cancelHandle) {
@@ -259,9 +264,9 @@ namespace Task {
 			}
 		}
 	}
-	unsigned Pool::s_routine(void *ptr) {
+
+	void Pool::s_routine(void* ptr) {
 		static_cast<Pool*>(ptr)->routine();
-		return 0;
 	}
 
 	Coroutine * Pool::allocCoroutine(size_t idx, ITask *task) {
@@ -484,25 +489,52 @@ namespace Task {
 		return await(Promise<void>(wait));
 	}
 
-	class TimeoutPromise : public DeferredContext<void> {
+	class TimerService {
 	public:
-		TimeoutPromise(unsigned int timeoutMs) {
-			m_hTimer = ::CreateWaitableTimer(NULL, FALSE, NULL);
-			LARGE_INTEGER li;
-			li.QuadPart = timeoutMs;
-			li.QuadPart *= -10000;
-			::SetWaitableTimer(m_hTimer, &li, 0, TimeoutPromise::OnTimeout, this, FALSE);
+		TimerService() : m_exit(false), m_thr(&TimerService::routine, this) {
 		}
-		virtual void cancelMe() {
-			::CancelWaitableTimer(m_hTimer);
-			delete this;
+		~TimerService() {
+			m_exit = true;
+			m_service.stop();
+			m_thr.join();
+		}
+		boost::asio::io_service& service() {
+			return m_service;
 		}
 	private:
-		HANDLE m_hTimer;
-		static void __stdcall OnTimeout(LPVOID ptr, DWORD, DWORD) {
-			TimeoutPromise* self = static_cast<TimeoutPromise*>(ptr);
-			self->resolve();
-			delete self;
+		void routine() {
+			try {
+				while (!m_exit) {
+					m_service.run();
+				}
+			} catch(...) {
+				
+			}
+		}
+		static void routine(void* ctx) {
+			reinterpret_cast<TimerService*>(ctx)->routine();
+		}
+		boost::asio::io_service m_service;
+		volatile bool m_exit;
+		Thread m_thr;
+	};
+
+	class TimeoutPromise : public DeferredContext<void> {
+	public:
+		TimeoutPromise(unsigned int timeoutMs) : m_deadline(Singleton<TimerService>::inst().service()) {
+			m_deadline.expires_from_now(boost::posix_time::milliseconds(timeoutMs));
+			m_deadline.async_wait(boost::bind(&TimeoutPromise::OnTimeout, this, boost::placeholders::_1));
+		}
+		virtual void cancelMe() {
+			m_deadline.cancel();
+		}
+	private:
+		boost::asio::deadline_timer m_deadline;
+		void OnTimeout(const boost::system::error_code& error) {
+			if (error != boost::asio::error::operation_aborted) {
+				resolve();
+			}
+			delete this;
 		}
 	};
 

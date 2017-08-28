@@ -1,6 +1,3 @@
-#ifndef _TASK_POOL_SYNC_POSIX_H_
-#define _TASK_POOL_SYNC_POSIX_H_
-
 #include <global.h>
 #include <exception>
 #include <pthread.h>
@@ -18,10 +15,10 @@ namespace Task {
 		~Mutex() {
 			pthread_mutex_destroy(&m_mutex);
 		}
-		void lock() const {
+		void lock() {
 			pthread_mutex_lock(&m_mutex);
 		}
-		void unlock() const {
+		void unlock() {
 			pthread_mutex_unlock(&m_mutex);
 		}
 	private:
@@ -34,14 +31,14 @@ namespace Task {
 			sem_init(&m_semaphore, 0, 0);
 		}
 		~Semaphore() {
-			::CloseHandle(m_semaphore);
+			sem_destroy(&m_semaphore);
 		}
-		void up(int count = 1) const {
+		void up(int count = 1) {
 			for(auto i=0; i<count; i++) {
 				sem_post(&m_semaphore);
 			}
 		}
-		void down() const {
+		void down() {
 			sem_wait(&m_semaphore);
 		}
 	private:
@@ -49,4 +46,3 @@ namespace Task {
 	};
 }
 
-#endif

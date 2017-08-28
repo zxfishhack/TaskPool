@@ -50,7 +50,7 @@ namespace Task
 	class DeferredContextInterface {
 	public:
 		DeferredContextInterface() {}
-		virtual ~DeferredContextInterface() = 0 {}
+		virtual ~DeferredContextInterface() {}
 		virtual void cancelMe() = 0;
 		virtual tribool resetMe() = 0;
 	};

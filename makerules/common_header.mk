@@ -1,0 +1,28 @@
+ifndef $(COMMON_HEADER_MK)
+COMMON_HEADER_MK = 1
+
+include $(PROJECT_ROOT_PATH)/makerules/common.mk
+
+LIB_DIR = $(PROJECT_ROOT_PATH)/$(LIB_DIR_$(PLATFORM))
+OBJ_BASE_DIR = $(PROJECT_ROOT_PATH)/objs/$(PLATFORM)
+EXE_DIR = $(PROJECT_ROOT_PATH)/bin/$(PLATFORM)
+
+CXX_OPTS += $(CFLAGS_GLOBAL_$(PLATFORM))
+CC_OPTS += $(CFLAGS_GLOBAL_$(PLATFORM))
+OPTI_OPTS += $(OPTI_GLOBAL_$(PLATFORM))
+DEFINE += $(DEFINE_GLOBAL_$(PLATFORM))
+
+ifeq ($(TREAT_WARNINGS_AS_ERROR), yes)
+CXX_OPTS += -Werror
+endif
+
+AR_OPTS+= -rc
+LD_OPTS+= -L$(LIB_DIR) -lpthread -lrt
+
+vpath %.a $(LIB_DIR)
+
+include $(PROJECT_ROOT_PATH)/makerules/includes.mk
+
+INCLUDE+=$(PROJECT_INCLUDE) -I$(shell pwd)
+
+endif

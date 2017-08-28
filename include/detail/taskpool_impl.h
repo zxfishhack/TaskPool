@@ -17,7 +17,7 @@ public:
 	void run() {
 		Ret ret = m_func();
 		if (indeterminate(DeferredContext<Ret>::state())) {
-			resolve(ret);
+			DeferredContext<Ret>::resolve(ret);
 		} else {
 			//do nothing
 		}
@@ -27,15 +27,30 @@ private:
 };
 
 template<>
-void PromiseTask<void>::run() {
-	m_func();
-	if (indeterminate(DeferredContext<void>::state())) {
-		DeferredContext<void>::resolve();
+class PromiseTask<void>
+	: public DeferredContext<void>
+	, public ITask {
+public:
+	PromiseTask(boost::function<void()> func)
+		: m_func(func) {}
+
+	void cancelMe() {
+		if (indeterminate(DeferredContext<void>::state())) {
+			DeferredContext<void>::reject();
+		}
 	}
-	else {
-		//do nothing
+	void run() {
+		m_func();
+		if (indeterminate(DeferredContext<void>::state())) {
+			DeferredContext<void>::resolve();
+		}
+		else {
+			//do nothing
+		}
 	}
-}
+private:
+	boost::function<void()> m_func;
+};
 
 class CancelToken : protected DeferredContext<void> {
 public:

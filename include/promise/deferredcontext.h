@@ -33,7 +33,7 @@ namespace Task {
 	public:
 		DeferredContext()
 			: DeferredBase(this), DeferredContextInterface() {}
-		virtual ~DeferredContext() = 0 {
+		virtual ~DeferredContext() {
 			setContext(NULL);
 		}
 
@@ -60,7 +60,6 @@ namespace Task {
 		}
 	};
 
-	// ReSharper disable once CppUnusedIncludeDirective
 #include "detail/deferredcontext_impl.h"
 }
 

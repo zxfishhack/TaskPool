@@ -3,18 +3,18 @@
 
 #include <misc/localstorage.h>
 #include <promise/promise.h>
-#include <process.h>
 #include <exception>
 #include <coroutine/coroutine.h>
 #include <platform/sync.h>
+#include <platform/thread.h>
 #include <deque>
 #include <coroutine/task.h>
 #include <boost/bind.hpp>
 #include <unordered_map>
 #include <boost/atomic.hpp>
 #include <vector>
-// ReSharper disable once CppUnusedIncludeDirective
 #include <promise/deferredcontext.h>
+#include <coroutine/coroutineschedule.h>
 
 namespace Task {
 
@@ -25,7 +25,6 @@ namespace Task {
 	class Pool;
 	
 	namespace internal {
-		extern detail::CoroutineLocal<ITask*> curTask;
 		extern detail::ThreadLocal<Pool*> curPool;
 		extern detail::ThreadLocal<CoroutineSchedule*> curSchedule;
 		extern detail::ThreadLocal<size_t> curThreadId;
@@ -45,7 +44,7 @@ namespace Task {
 
 		typedef std::deque<Coroutine*> TaskQueueType;
 		typedef std::unordered_map<size_t, ITask*> CancelableTaskMap;
-		HANDLE * m_threads;
+		std::vector<Thread*> m_threads;
 		int m_threadNum;
 		size_t m_poolId;
 		static boost::atomic<size_t> s_poolId;
@@ -65,7 +64,7 @@ namespace Task {
 		boost::atomic<size_t> m_cancelHandleValue;
 		static const size_t MAX_FREE_QUEUE_SIZE = 1024;
 		void routine();
-		static unsigned __stdcall s_routine(void* ptr);
+		static void s_routine(void* ptr);
 		Coroutine * allocCoroutine(size_t idx, ITask* task);
 		void freeCoroutine(Coroutine* co);
 		static void checkSemaphore(TaskQueueType& list, Semaphore& sem);
@@ -100,7 +99,7 @@ namespace Task {
 	template<typename Ty>
 	Promise<Ty> await(Promise<Ty> pro) {
 		Pool* pool = internal::curPool.get();
-		ITask* task = internal::curTask.get();
+		ITask* task = internal::curSchedule.get()->running()->task();
 		Coroutine* co = task->associate();
 		assert(co);
 		if (indeterminate(pro.reset())) {
