@@ -535,8 +535,6 @@ namespace Task {
 		void OnTimeout(const boost::system::error_code& error) {
 			if (error != boost::asio::error::operation_aborted) {
 				resolve();
-			} else {
-				std::cout <<"cancel"<<std::endl;
 			}
 			delete this;
 		}
