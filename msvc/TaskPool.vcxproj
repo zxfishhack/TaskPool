@@ -143,6 +143,8 @@
     <ClInclude Include="..\include\global.h" />
     <ClInclude Include="..\include\misc\localstorage.h" />
     <ClInclude Include="..\include\platform\sync.h" />
+    <ClInclude Include="..\include\platform\sync_posix.h" />
+    <ClInclude Include="..\include\platform\sync_w32.h" />
     <ClInclude Include="..\include\promise\deferredcontext.h" />
     <ClInclude Include="..\include\promise\detail\deferredbase.h" />
     <ClInclude Include="..\include\promise\detail\deferredcontext_impl.h" />

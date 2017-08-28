@@ -31,7 +31,7 @@ namespace Task {
 		extern detail::ThreadLocal<size_t> curThreadId;
 	}
 	
-	class Pool {
+	class Pool : boost::noncopyable {
 	public:
 		Pool(int thrNum, KAFFINITY affinity = 0);
 		~Pool();
@@ -79,8 +79,9 @@ namespace Task {
 
 	Promise<void> createTimeout(unsigned int timeoutMs);
 
-	template<typename Ret>
-	Promise<Ret> async(boost::function<Ret()> func) {
+	template<typename function>
+	Promise<typename function::result_type> async(function func) {
+		using Ret = typename function::result_type;
 		Pool* pool = internal::curPool.get();
 		if (pool == NULL) {
 			return Promise<Ret>(false);

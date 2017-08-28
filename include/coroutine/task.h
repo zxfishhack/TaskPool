@@ -8,7 +8,7 @@ namespace Task {
 
 	class Coroutine;
 
-	class ITask {
+	class ITask : boost::noncopyable {
 	public:
 		void Run();
 
@@ -50,7 +50,7 @@ namespace Task {
 	};
 	class Pool;
 
-	class PromiseNotify {
+	class PromiseNotify : boost::noncopyable {
 	public:
 		PromiseNotify(Coroutine* taskToNotify, Pool* pool)
 			: m_taskToNotify(taskToNotify)

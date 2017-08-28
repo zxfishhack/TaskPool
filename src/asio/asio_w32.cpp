@@ -4,7 +4,6 @@
 #include <boost/smart_ptr.hpp>
 
 namespace Task {
-
 	struct CompleteData : public DeferredContext<Size> {
 		OVERLAPPED overlap;
 		boost::shared_array<char> bufHold;

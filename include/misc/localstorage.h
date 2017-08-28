@@ -7,7 +7,7 @@ namespace Task {
 	namespace detail {
 		
 		template<typename Ty>
-		class ThreadLocal {
+		class ThreadLocal : boost::noncopyable {
 		public:
 			ThreadLocal() {
 				m_tlsId = ::TlsAlloc();
@@ -26,7 +26,7 @@ namespace Task {
 		};
 		
 		template<typename Ty>
-		class CoroutineLocal {
+		class CoroutineLocal : boost::noncopyable {
 		public:
 			CoroutineLocal() {
 				m_clsId = ::FlsAlloc(NULL);

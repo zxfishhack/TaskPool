@@ -81,6 +81,12 @@
     <ClInclude Include="..\include\promise\detail\deferreddata.h">
       <Filter>include\promise\detail</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\platform\sync_w32.h">
+      <Filter>include\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\platform\sync_posix.h">
+      <Filter>include\platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\taskpool.cpp">

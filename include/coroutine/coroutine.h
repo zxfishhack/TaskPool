@@ -1,14 +1,12 @@
 ﻿#ifndef _TASK_POOL_COROUTINE_H_
 #define _TASK_POOL_COROUTINE_H_
 
-#include <asio/asio.h>
-
 namespace Task {
 	
 	class ITask;
 	class CoroutineSchedule;
 
-	class Coroutine {
+	class Coroutine : boost::noncopyable {
 	public:
 		enum Status {
 			DEAD,

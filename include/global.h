@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <boost/logic/tribool.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/noncopyable.hpp>
 
 using boost::logic::tribool;
 using boost::logic::indeterminate;

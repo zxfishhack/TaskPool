@@ -9,3 +9,4 @@ msvc/TaskPool.VC.db
 libs/
 bin/
 vendor/boost/
+/msvc/deferreddata.i-b49ed93e
