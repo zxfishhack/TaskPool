@@ -51,21 +51,21 @@ depend: $(SOURCES)
 	done
 #	$(MKDEP)
 
-so:
+so: $(OBJS)
 	@echo \# $(MODULE): $(PLATFORM): Linking to .so
-	cd $(OBJ_DIR) ; $(LD) $(OBJS) $(LD_OPTS) -fPIC -shared -o $(SO_LIB)
+	cd $(OBJ_DIR) ; $(LD) $(OBJS) $(LD_OPTS) $(CXX_OPTS) -fPIC -shared -o $(SO_LIB)
 	@echo \#
 
 lib: $(LIB_DIR)/$(LIB)
 
-$(LIB_DIR)/$(LIB) : 
+$(LIB_DIR)/$(LIB) : $(OBJS)
 	@echo \# $(MODULE): $(PLATFORM): Creating archive $(LIB)
-	cd $(OBJ_DIR) ; $(AR) $(AR_OPTS) $(LIB_DIR)/$(LIB) $(OBJS)
+	cd $(OBJ_DIR) ; $(AR) $(AR_OPTS) $(CXX_OPTS) $(LIB_DIR)/$(LIB) $(OBJS)
 	@echo \# 
 
-exe: 
+exe: $(OBJS) 
 	@echo \# $(MODULE): $(PLATFORM): Linking
-	cd $(OBJ_DIR) ; $(LD) $(OBJS) $(LD_OPTS) -o$(EXE)
+	cd $(OBJ_DIR) ; $(LD) $(OBJS) $(LD_OPTS) $(CXX_OPTS) -o$(EXE)
 	@echo \#
 
 libs:

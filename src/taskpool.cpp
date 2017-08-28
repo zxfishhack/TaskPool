@@ -271,6 +271,7 @@ namespace Task {
 
 	Coroutine * Pool::allocCoroutine(size_t idx, ITask *task) {
 		Coroutine * co = NULL;
+		if (false)
 		{
 			ScopedLock _(m_freeLock);
 			if (m_freeCount > 0) {
@@ -489,10 +490,14 @@ namespace Task {
 		return await(Promise<void>(wait));
 	}
 
+	boost::asio::io_service m_service;
+	boost::asio::io_service::work m_monitor(m_service);
+
 	class TimerService {
-	public:
-		TimerService() : m_exit(false), m_thr(&TimerService::routine, this) {
+		friend class Singleton<TimerService>;
+		TimerService() : m_monitor(m_service), m_exit(false), m_thr(&TimerService::routine, this) {
 		}
+	public:
 		~TimerService() {
 			m_exit = true;
 			m_service.stop();
@@ -502,19 +507,16 @@ namespace Task {
 			return m_service;
 		}
 	private:
+		boost::asio::io_service m_service;
+		boost::asio::io_service::work m_monitor;
 		void routine() {
-			try {
-				while (!m_exit) {
-					m_service.run();
-				}
-			} catch(...) {
-				
+			while (!m_exit) {
+				m_service.run();
 			}
 		}
 		static void routine(void* ctx) {
 			reinterpret_cast<TimerService*>(ctx)->routine();
 		}
-		boost::asio::io_service m_service;
 		volatile bool m_exit;
 		Thread m_thr;
 	};
@@ -533,6 +535,8 @@ namespace Task {
 		void OnTimeout(const boost::system::error_code& error) {
 			if (error != boost::asio::error::operation_aborted) {
 				resolve();
+			} else {
+				std::cout <<"cancel"<<std::endl;
 			}
 			delete this;
 		}

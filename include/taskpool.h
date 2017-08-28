@@ -99,8 +99,7 @@ namespace Task {
 	template<typename Ty>
 	Promise<Ty> await(Promise<Ty> pro) {
 		Pool* pool = internal::curPool.get();
-		ITask* task = internal::curSchedule.get()->running()->task();
-		Coroutine* co = task->associate();
+		auto co = internal::curSchedule.get()->running();
 		assert(co);
 		if (indeterminate(pro.reset())) {
 			boost::shared_ptr<PromiseNotify> notify(new PromiseNotify(co, pool));
