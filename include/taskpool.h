@@ -81,7 +81,7 @@ namespace Task {
 	template<typename function>
 	Promise<typename function::result_type> async(function func) {
 		using Ret = typename function::result_type;
-		Pool* pool = internal::curPool.get();
+		auto pool = internal::curPool.get();
 		if (pool == NULL) {
 			return Promise<Ret>(false);
 		}
@@ -98,7 +98,7 @@ namespace Task {
 
 	template<typename Ty>
 	Promise<Ty> await(Promise<Ty> pro) {
-		Pool* pool = internal::curPool.get();
+		auto pool = internal::curPool.get();
 		auto co = internal::curSchedule.get()->running();
 		assert(co);
 		if (indeterminate(pro.reset())) {

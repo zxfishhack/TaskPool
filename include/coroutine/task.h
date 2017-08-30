@@ -55,7 +55,6 @@ namespace Task {
 		PromiseNotify(Coroutine* taskToNotify, Pool* pool)
 			: m_taskToNotify(taskToNotify)
 			, m_pool(pool){}
-
 		bool isCancelled();
 		void notify(tribool res);
 	private:

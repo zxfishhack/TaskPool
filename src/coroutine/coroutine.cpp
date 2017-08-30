@@ -8,7 +8,8 @@ namespace Task {
 #ifdef _WIN32
 	Coroutine::Coroutine(ITask *task) 
 		: m_task(task)
-		, m_status(READY) {
+		, m_status(READY)
+		, m_waking(false) {
 		m_fiber = ::CreateFiberEx(0, 0, FIBER_FLAG_FLOAT_SWITCH, s_fiberProc, this);
 	}
 	Coroutine::~Coroutine() {
@@ -55,6 +56,14 @@ namespace Task {
 
 	void Coroutine::setWaiting() {
 		m_status = WAITING;
+	}
+
+	void Coroutine::setWaking(bool waking) {
+		m_waking = waking;
+	}
+
+	bool Coroutine::waking() const {
+		return m_waking;
 	}
 
 	Coroutine::Status Coroutine::status() const {

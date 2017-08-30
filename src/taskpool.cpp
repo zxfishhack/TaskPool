@@ -196,7 +196,9 @@ namespace Task {
 			// don't wakeup coroutine before first run
 			return false;
 		}
-		size_t idx = co->task()->associateThread() - 1;
+		auto idx = m_curIdx.fetch_add(1);
+		idx %= m_threadNum;
+		//size_t idx = co->task()->associateThread() - 1;
 		{
 			// always wakeup in same thread
 			ScopedLock _(m_lock[idx]);
@@ -224,6 +226,7 @@ namespace Task {
 						co = m_privateQueue[idx].front();
 						m_privateQueue[idx].pop_front();
 					}
+					while(co && co->waking()) {}
 				}
 			}
 			if (!co) {
@@ -271,7 +274,6 @@ namespace Task {
 
 	Coroutine * Pool::allocCoroutine(size_t idx, ITask *task) {
 		Coroutine * co = NULL;
-		if (false)
 		{
 			ScopedLock _(m_freeLock);
 			if (m_freeCount > 0) {
@@ -345,7 +347,7 @@ namespace Task {
 			return lhs || rhs;
 		}
 	};
-
+	
 	template<typename Operator>
 	class WaitMany0
 		: public DeferredContextInterface
@@ -353,25 +355,26 @@ namespace Task {
 	public:
 		void init(std::vector<IPromise>& promises) {
 			m_promises.swap(promises);
-			for (std::vector<IPromise>::iterator i = m_promises.begin(); i != m_promises.end(); ++i) {
+			for (auto i = m_promises.begin(); i != m_promises.end(); ++i) {
 				i->always(boost::bind(&WaitMany0::onAlways, this, boost::placeholders::_1));
 			}
 			WaitMany0::onAlways(true);
 		}
-		virtual void cancelMe() {
-			for (std::vector<IPromise>::iterator i = m_promises.begin(); i != m_promises.end(); ++i) {
+		virtual void cancelMe() override {
+			auto hold(shared_from_this());
+			for (auto i = m_promises.begin(); i != m_promises.end(); ++i) {
 				i->cancel();
 			}
 		}
 		virtual tribool resetMe() {
 			tribool state = Operator::zero();
-			for (std::vector<IPromise>::iterator i = m_promises.begin(); i != m_promises.end(); ++i) {
+			for (auto i = m_promises.begin(); i != m_promises.end(); ++i) {
 				state = Operator::apply(state, i->reset());
 			}
 			return state;
 		}
 		~WaitMany0() {
-			for (std::vector<IPromise>::iterator i = m_promises.begin(); i != m_promises.end(); ++i) {
+			for (auto i = m_promises.begin(); i != m_promises.end(); ++i) {
 				i->removeAlways();
 			}
 		}
@@ -379,25 +382,23 @@ namespace Task {
 		Mutex m_lock;
 
 		virtual void done() {}
-		virtual void onAlways(tribool) {
+		virtual void onAlways(tribool res) {
+			DeferredDataPtr hold(shared_from_this());
+			ScopedLock _(m_lock);
 			tribool s = Operator::zero();
-			for (std::vector<IPromise>::iterator i = m_promises.begin(); i != m_promises.end(); ++i) {
+			for (auto i = m_promises.begin(); i != m_promises.end(); ++i) {
 				s = Operator::apply(s, i->state());
 			}
-			{
-				ScopedLock _(m_lock);
-				if (indeterminate(state())) {
-
-					if (s) {
-						resolve();
-						done();
-					}
-					else if (!s) {
-						reject();
-					}
-					else {
-						// nothing to do
-					}
+			if (indeterminate(state())) {
+				if (s) {
+					resolve();
+					done();
+				}
+				else if (!s) {
+					reject();
+				}
+				else {
+					// nothing to do
 				}
 			}
 		}
@@ -419,6 +420,7 @@ namespace Task {
 			m_timeout.cancel();
 		}
 		virtual void onAlways(tribool res) {
+			DeferredDataPtr hold(WaitMany0<Operator>::shared_from_this());
 			WaitMany0<Operator>::onAlways(res);
 			{
 				ScopedLock _(WaitMany0<Operator>::m_lock);
@@ -444,6 +446,7 @@ namespace Task {
 		}
 	protected:
 		virtual void onAlways(tribool res) {
+			DeferredDataPtr hold(WaitMany0<Operator>::shared_from_this());
 			WaitMany0<Operator>::onAlways(res);
 			{
 				ScopedLock _(WaitMany0<Operator>::m_lock);

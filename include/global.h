@@ -15,6 +15,6 @@
 using boost::logic::tribool;
 using boost::logic::indeterminate;
 
-const int STACK_SIZE = 1024 * 1024;
+const int STACK_SIZE = 1024;
 
 #endif

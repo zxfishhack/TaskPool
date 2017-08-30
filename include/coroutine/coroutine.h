@@ -27,6 +27,8 @@ namespace Task {
 		void yield();
 		void resume();
 		void setWaiting();
+		void setWaking(bool waking);
+		bool waking() const;
 		Status status() const;
 		int managedThreadId() const;
 		ITask* task();
@@ -34,6 +36,7 @@ namespace Task {
 		friend class CoroutineSchedule;
 		ITask* m_task;
 		Status m_status;
+		bool m_waking;
 		void fiberProc();
 #ifdef _WIN32
 		HANDLE m_fiber;

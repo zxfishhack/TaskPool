@@ -11,8 +11,10 @@
 
 Task::Mutex g_outputLock;
 
+boost::atomic<int> doneJob(0);
+
 int TestAsync(int i) {
-	Task::await(Task::createTimeout(500 * i));
+	//Task::await(Task::createTimeout(500 * i));
 	return i * 10;
 }
 
@@ -25,16 +27,20 @@ void FunctionTask(int ud) {
 		resultList.push_back(ret);
 	}
 	auto waitResult = Task::waitAll(waitList);// , 5000);
-	//Task::ScopedLock _(g_outputLock);
+	
 	if (waitResult.isResolved()) {
 		int sum = 0;
 		for (auto i = resultList.begin(); i < resultList.end(); ++i) {
 			sum += i->result();
 		}
-		std::cout << "run sub taskes succ. val: " << sum << std::endl;
+		//std::cout << "run sub taskes succ. val: " << sum << std::endl;
 	}
 	else {
 		//std::cout << "run sub task failed." << std::endl;
+	}
+	{
+		Task::ScopedLock _(g_outputLock);
+		doneJob.fetch_add(1);
 	}
 }
 
@@ -48,13 +54,19 @@ void FunctionTask2(int ud) {
 }
 
 int main() {
-	Task::Pool tp(100);
-	for (int i = 0; i<100000; i++) {
-		tp.addTask(Task::Task::create(boost::bind(FunctionTask, 8 * ((i % 2) + 1))));
+	Task::Pool tp(32);
+	auto jobNum = 10000;
+	auto submitJob = 0;
+	for (int i = 0; i<jobNum; i++) {
+		submitJob += tp.addTask(Task::Task::create(boost::bind(FunctionTask, 8 * ((i % 2) + 1)))) ? 1 : 0;
 	}
-	tp.addTask(Task::Task::create(boost::bind(FunctionTask, 16)));
+	std::cout << "submit taskes succ." << std::endl;
+	while(doneJob != submitJob) {
+		Sleep(1);
+	}
+	std::cout << "all taskes done." << std::endl;
+	tp.join();
 	int c;
 	std::cin >> c;
-	tp.join();
 	return 0;
 }
