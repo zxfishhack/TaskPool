@@ -461,33 +461,34 @@ namespace Task {
 		Promise<void> m_cancel;
 	};
 
-	Promise<void> waitAll(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token) {
+	void waitAll(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token) {
+
 		boost::shared_ptr<WaitMany2<TriboolAnd>> wait(new WaitMany2<TriboolAnd>());
 		wait->init(promises, timeoutMs, token);
 		return await(Promise<void>(wait));
 	}
-	Promise<void> waitAll(std::vector<IPromise> promises, unsigned int timeoutMs) {
+	void waitAll(std::vector<IPromise> promises, unsigned int timeoutMs) {
 		boost::shared_ptr<WaitMany1<TriboolAnd>> wait(new WaitMany1<TriboolAnd>());
 		wait->init(promises, timeoutMs);
 		return await(Promise<void>(wait));
 	}
-	Promise<void> waitAll(std::vector<IPromise> promises) {
+	void waitAll(std::vector<IPromise> promises) {
 		boost::shared_ptr<WaitMany0<TriboolAnd>> wait(new WaitMany0<TriboolAnd>());
 		wait->init(promises);
 		return await(Promise<void>(wait));
 	}
 
-	Promise<void> waitAny(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token) {
+	void waitAny(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token) {
 		boost::shared_ptr<WaitMany2<TriboolOr>> wait(new WaitMany2<TriboolOr>());
 		wait->init(promises, timeoutMs, token);
 		return await(Promise<void>(wait));
 	}
-	Promise<void> waitAny(std::vector<IPromise> promises, unsigned int timeoutMs) {
+	void waitAny(std::vector<IPromise> promises, unsigned int timeoutMs) {
 		boost::shared_ptr<WaitMany1<TriboolOr>> wait(new WaitMany1<TriboolOr>());
 		wait->init(promises, timeoutMs);
 		return await(Promise<void>(wait));
 	}
-	Promise<void> waitAny(std::vector<IPromise> promises) {
+	void waitAny(std::vector<IPromise> promises) {
 		boost::shared_ptr<WaitMany0<TriboolOr>> wait(new WaitMany0<TriboolOr>());
 		wait->init(promises);
 		return await(Promise<void>(wait));

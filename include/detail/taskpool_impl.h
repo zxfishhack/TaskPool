@@ -10,17 +10,10 @@ public:
 		: m_func(func){}
 
 	void cancelMe() {
-		if (indeterminate(DeferredContext<Ret>::state())) {
-			DeferredContext<Ret>::reject();
-		}
+		DeferredContext<Ret>::reject();
 	}
 	void run() {
-		Ret ret = m_func();
-		if (indeterminate(DeferredContext<Ret>::state())) {
-			DeferredContext<Ret>::resolve(ret);
-		} else {
-			//do nothing
-		}
+		DeferredContext<Ret>::resolve(m_func());
 	}
 private:
 	boost::function<Ret()> m_func;
@@ -35,18 +28,11 @@ public:
 		: m_func(func) {}
 
 	void cancelMe() {
-		if (indeterminate(DeferredContext<void>::state())) {
-			DeferredContext<void>::reject();
-		}
+		DeferredContext<void>::reject();
 	}
 	void run() {
 		m_func();
-		if (indeterminate(DeferredContext<void>::state())) {
-			DeferredContext<void>::resolve();
-		}
-		else {
-			//do nothing
-		}
+		DeferredContext<void>::resolve();
 	}
 private:
 	boost::function<void()> m_func;
@@ -60,8 +46,8 @@ public:
 private:
 	void cancelMe(){}
 
-	friend Promise<void> waitAll(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token);
-	friend Promise<void> waitAny(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token);
+	friend void waitAll(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token);
+	friend void waitAny(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token);
 	template<typename Operator> friend class WaitMany2;
 };
 

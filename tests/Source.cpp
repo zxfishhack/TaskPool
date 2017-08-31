@@ -19,25 +19,28 @@ int TestAsync(int i) {
 }
 
 void FunctionTask(int ud) {
-	std::vector<Task::IPromise> waitList;
 	std::vector<Task::Promise<int>> resultList;
 	for (int i = 0; i<ud; i++) {
 		auto ret = Task::async(boost::bind(TestAsync, i));
-		waitList.push_back(ret);
 		resultList.push_back(ret);
 	}
-	auto waitResult = Task::waitAll(waitList);// , 5000);
+	//auto waitResult = Task::waitAll(waitList);// , 5000);
+
+	int sum = 0;
+	for(auto i : resultList) {
+		sum += Task::await(i);
+	}
 	
-	if (waitResult.isResolved()) {
-		int sum = 0;
-		for (auto i = resultList.begin(); i < resultList.end(); ++i) {
-			sum += i->result();
-		}
-		//std::cout << "run sub taskes succ. val: " << sum << std::endl;
-	}
-	else {
-		//std::cout << "run sub task failed." << std::endl;
-	}
+	//if (waitResult.isResolved()) {
+	//	int sum = 0;
+	//	for (auto i = resultList.begin(); i < resultList.end(); ++i) {
+	//		sum += i->result();
+	//	}
+	//	//std::cout << "run sub taskes succ. val: " << sum << std::endl;
+	//}
+	//else {
+	//	//std::cout << "run sub task failed." << std::endl;
+	//}
 	{
 		Task::ScopedLock _(g_outputLock);
 		doneJob.fetch_add(1);
@@ -49,12 +52,12 @@ int TestAsync2(int i) {
 }
 
 void FunctionTask2(int ud) {
-	auto res = Task::await(Task::async(boost::bind(TestAsync2, ud))).result();
+	auto res = Task::await(Task::async(boost::bind(TestAsync2, ud)));
 	std::cout << "result: " << res << std::endl;
 }
 
 int main() {
-	Task::Pool tp(32);
+	Task::Pool tp(1);
 	auto jobNum = 10000;
 	auto submitJob = 0;
 	for (int i = 0; i<jobNum; i++) {

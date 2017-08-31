@@ -73,6 +73,7 @@ namespace Task {
 	};
 
 	class CancelAsyncException : public std::exception {};
+	class RejectAsyncException : public std::exception {};
 
 	#include "detail/taskpool_impl.h"
 
@@ -97,10 +98,9 @@ namespace Task {
 	}
 
 	template<typename Ty>
-	Promise<Ty> await(Promise<Ty> pro) {
+	Ty await(Promise<Ty> pro) {
 		auto pool = internal::curPool.get();
 		auto co = internal::curSchedule.get()->running();
-		assert(co);
 		if (indeterminate(pro.reset())) {
 			boost::shared_ptr<PromiseNotify> notify(new PromiseNotify(co, pool));
 			pro.always(boost::bind(&PromiseNotify::notify, notify.get(), boost::placeholders::_1));
@@ -112,16 +112,39 @@ namespace Task {
 				throw(CancelAsyncException());
 			}
 		}
-		return pro;
+		if (!pro.isResolved()) {
+			throw(RejectAsyncException());
+		}
+		return pro.result();
  	}
 
-	Promise<void> waitAll(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token);
-	Promise<void> waitAll(std::vector<IPromise> promises, unsigned int timeoutMs);
-	Promise<void> waitAll(std::vector<IPromise> promises);
+	template<>
+	inline void await<void>(Promise<void> pro) {
+		auto pool = internal::curPool.get();
+		auto co = internal::curSchedule.get()->running();
+		if (indeterminate(pro.reset())) {
+			boost::shared_ptr<PromiseNotify> notify(new PromiseNotify(co, pool));
+			pro.always(boost::bind(&PromiseNotify::notify, notify.get(), boost::placeholders::_1));
+			co->setWaiting();
+			co->yield();
+			pro.removeAlways();
+			if (notify->isCancelled()) {
+				pro.cancel();
+				throw(CancelAsyncException());
+			}
+		}
+		if (!pro.isResolved()) {
+			throw(RejectAsyncException());
+		}
+	}
 
-	Promise<void> waitAny(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token);
-	Promise<void> waitAny(std::vector<IPromise> promises, unsigned int timeoutMs);
-	Promise<void> waitAny(std::vector<IPromise> promises);
+	void waitAll(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token);
+	void waitAll(std::vector<IPromise> promises, unsigned int timeoutMs);
+	void waitAll(std::vector<IPromise> promises);
+
+	void waitAny(std::vector<IPromise> promises, unsigned int timeoutMs, CancelToken token);
+	void waitAny(std::vector<IPromise> promises, unsigned int timeoutMs);
+	void waitAny(std::vector<IPromise> promises);
 }
 
 #endif

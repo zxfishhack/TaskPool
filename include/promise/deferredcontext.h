@@ -42,17 +42,15 @@ namespace Task {
 		}
 
 		void resolve() {
-			if (!indeterminate(d_ptr->state())) {
-				return;
+			if (indeterminate(d_ptr->state())) {
+				d_ptr->resolve();
 			}
-			d_ptr->resolve();
 		}
 
 		void reject() {
-			if (!indeterminate(d_ptr->state())) {
-				return;
+			if (indeterminate(d_ptr->state())) {
+				d_ptr->reject();
 			}
-			d_ptr->reject();
 		}
 
 		virtual tribool resetMe() {

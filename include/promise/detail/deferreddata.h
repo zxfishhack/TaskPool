@@ -53,14 +53,12 @@ namespace Task
 		bool isResolved() const;
 
 		bool isActivating() const;
+		boost::any m_result;
 	protected:
-#ifdef DEBUG
-		char SIGNATURE[16];
-#endif
 		tribool m_state;
 		bool m_activating;
 		bool m_ownContext;
-		boost::any m_result;
+		
 
 		DeferredContextInterface* m_context;
 		PromiseCallback m_done;
